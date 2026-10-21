@@ -7,7 +7,7 @@
 <title>Garcia Caixas 3D</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=Outfit:wght@400;600&display=swap">
 <style>
-/* Layout: coluna de medidas à esquerda; à direita o palco 3D com o controle Abrir/Fechar e, abaixo, a planificação com cotas. */
+
 :root {
   --bg: #e9ebe6;
   --surface: #f6f6f2;
@@ -219,6 +219,14 @@ input[type=text] {
 }
 @media (max-width: 560px) { .top-title { text-align: left; } .hint { display: none; } .stage-tag { left: 12px; right: auto; top: 52px; max-width: calc(100% - 24px); text-align: left; border-radius: 12px; } }
 </style>
+<style>
+.app{grid-template-columns:minmax(0,1fr)}
+.side{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:12px 16px}
+.side>div:first-child{flex:0 1 280px}
+.btns{margin-left:auto}
+.note{flex:2 1 260px}
+.stage{height:clamp(380px,64vh,700px)}
+</style>
 
 </head>
 <body>
@@ -243,29 +251,11 @@ input[type=text] {
           <option value="wa">WA com visor nas laterais</option>
         </select>
       </div>
-      <div>
-        <h2>Painéis (mm)</h2>
-        <div class="grid2">
-          <label for="w0">Painel 1<input id="w0" type="number" min="20" step="1"></label>
-          <label for="w1">Painel 2<input id="w1" type="number" min="20" step="1"></label>
-          <label for="w2">Painel 3<input id="w2" type="number" min="20" step="1"></label>
-          <label for="w3">Painel 4<input id="w3" type="number" min="20" step="1"></label>
-          <label for="h">Altura<input id="h" type="number" min="20" step="1"></label>
-          <label for="g">Aba de cola<input id="g" type="number" min="10" step="1"></label>
-          <label for="ft">Aba superior<input id="ft" type="number" min="0" step="1"></label>
-          <label for="fb">Aba inferior<input id="fb" type="number" min="0" step="1"></label>
-        </div>
-      </div>
-      <div class="stats" aria-live="polite">
-        <div><span>Medidas internas</span><span id="sInt"></span></div>
-        <div><span>Chapa (L × C)</span><span id="sFlat"></span></div>
-        <div><span>Área da chapa</span><span id="sArea"></span></div>
-        <div><span>Externa (C × L × A)</span><span id="sBox"></span></div>
-      </div>
+
       <p class="note" id="note"></p>
       <div class="btns">
         <button id="bOpen" type="button">Planificar</button>
-        <button id="bFlat" type="button">Como o cliente recebe</button>
+        <button id="bFlat" type="button">Como você recebe</button>
         <button id="bClose" type="button" class="primary">Montar</button>
       </div>
     </aside>
@@ -278,16 +268,7 @@ input[type=text] {
         <button id="bCenter" type="button" class="center-btn" aria-label="Centralizar a caixa">Centralizar</button>
         <div class="fold"><span id="fL">Planificada</span><input id="fold" type="range" min="0" max="1000" value="275" aria-label="Etapa da montagem da caixa"><span id="fR">Fechada</span></div>
       </div>
-      <div class="card dl">
-        <div class="dl-head">
-          <h2>Planificação com cotas</h2>
-          <div class="legend">
-            <span><i style="color:var(--cut)"></i>Corte</span>
-            <span><i style="color:var(--crease);border-top-style:dashed"></i>Vinco</span>
-          </div>
-        </div>
-        <div class="dl-scroll"><svg id="dieline" role="img" aria-label="Planificação da caixa com medidas em milímetros"></svg></div>
-      </div>
+
     </div>
   </div>
 </div>
@@ -302,13 +283,14 @@ input[type=text] {
 <script>
 (function () {
   var PRESETS = {
-    m201: { w: [222, 373, 223, 372], h: 296, g: 30, ft: 112, fb: 112, gapL: [0, 2, 2, 2], gapR: [2, 2, 2, 0], internal: '370 × 220 × 290 mm', glued: true, t0: 0.275, note: 'Entrega: chapa já dobrada e colada na fábrica. O cliente só abre e monta.' },
-    m206: { w: [222, 373, 223, 372], h: 296, g: 30, ft: 50, fb: 112, gapL: [0, 2, 2, 2], gapR: [2, 2, 2, 0], internal: '370 × 220 × 290 mm · aba curta 50', glued: true, t0: 0.275, note: 'Entrega: chapa já dobrada e colada na fábrica. O cliente só abre e monta.' },
-    wa: { w: [376, 293, 373, 291], h: 229, g: 50, ft: 50, fb: 50, gapL: [0, 8, 8, 8], gapR: [8, 8, 8, 14], internal: '370 × 290 × 220 mm (estimado)', axis: 'z', glued: false, t0: 0.62, note: '' }
+    m201: { w: [222, 373, 223, 372], h: 296, g: 30, ft: 112, fb: 112, gapL: [0, 2, 2, 2], gapR: [2, 2, 2, 0], internal: '', glued: true, t0: 0.275, note: 'Entrega: chapa já dobrada e colada na fábrica. Basta abrir e montar.' },
+    m206: { w: [222, 373, 223, 372], h: 296, g: 30, ft: 50, fb: 112, gapL: [0, 2, 2, 2], gapR: [2, 2, 2, 0], internal: '', glued: true, t0: 0.275, note: 'Entrega: chapa já dobrada e colada na fábrica. Basta abrir e montar.' },
+    wa: { w: [376, 293, 373, 291], h: 229, g: 50, ft: 50, fb: 50, gapL: [0, 8, 8, 8], gapR: [8, 8, 8, 14], internal: '', axis: 'z', glued: false, t0: 0.62, note: '' }
   };
   var cfg = null;
   var ids = ['w0', 'w1', 'w2', 'w3', 'h', 'g', 'ft', 'fb'];
-  var $ = function (id) { return document.getElementById(id); };
+  var stub = { addEventListener: function () {}, setAttribute: function () {}, style: {}, value: '', textContent: '', innerHTML: '', hidden: false };
+  var $ = function (id) { return document.getElementById(id) || stub; };
   var t = 0.62;
   var anim = null;
   var dirty = true;
@@ -449,8 +431,8 @@ input[type=text] {
     if (t < 0.03) lab = 'Chapa planificada';
     else if (!cfg.glued) lab = t > 0.99 ? 'Caixa fechada' : 'Montando a caixa';
     else if (t < 0.25) lab = 'Dobrando e colando na fábrica';
-    else if (t <= 0.31) lab = 'Dobrada e colada, como o cliente recebe';
-    else if (t < 0.62) lab = 'Cliente abre e monta a caixa';
+    else if (t <= 0.31) lab = 'Dobrada e colada, como você recebe';
+    else if (t < 0.62) lab = 'Você abre e monta a caixa';
     else if (t < 0.995) lab = 'Fechando as abas';
     else lab = 'Caixa montada e fechada';
     if ($('stageTag').textContent !== lab) $('stageTag').textContent = lab;
